@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Cheap+Correct Oil&Gas Testing
+
+---
+
+
+class: center, middle
+
+# Debugging Costs
+
+Every node-hour spent incorrectly simulating physics costs $$$ with no return
+
+---
+
+class: center, middle
+
+# Debugging Costs
+
+Wave propagation represents major human,development & compute cost
+
+---
+
+class: center, middle
+
+# Debugging Costs
+
+Let's offload correctness to computers rather than people. Let people focus on the problem they know.
+
+---
+
+class: middle
+
+# Certifloat Physics Compiler
+
+The certifloat physics compiler does three things to save you time and money:
+
+1. Ingests data in common oil&gas formats (e.g. POD binary, SEGY,...)
+2. Generates an executable which simulates the specified physics (e.g. elastic wave equation)
+3. Generates a [Coq](https://coq.inria.fr/) certificate proving the executable in (2) is correct
+  1. This means you may treat the generated executable like an exact analytic solution
+  2. This high confidence enables very robust testing
+   
+
+
+---
+
+class: middle
+
+# Certifloat Physics Compiler
+
+Your workflow otherwise does not change. Your geophysicists simply deliver more
+valuable information to the software developers by way of rigorous
+test cases. Cut out ambiguity and proceed directly to actionable
+simulation results.
+
+---
+
+
+# Example (code)
+
+```c++
+/*file: acoustic.pde.*/
+/*Purpose: A simple acoustic wave equation propagator.*/
+/*Declare our three spatial dimensions. */
+IndependentVariable x("x"), y("y"),z("z");
+/*And of course, our time variable.*/
+IndependentVariable t("t");
+
+/*Now let's specify some inputs to our propagator.*/
+
+/*An initial state that is a variable of x,y,z.*/
+DependentVariable u0("u0",{x,y,z},format=FLOAT32_BINARY_GRID);
+/*The speed of sound.*/
+DependentVariable c("c",{x,y,z},format=FLOAT32_BINARY_GRID);
+
+/*And finally the output is also a dependent variable.*/
+DependentVariable u("u",{x,y,z},format=FLOAT32_BINARY_GRID);
+
+/*Specify equation and boundary conditions to solve.*/
+Domain dom({x,y,z},Cube({{0,1},{0,1},{0,1}}); /*Solve on a cube 0<=x,y,z<=1.*/
+solve(
+  diff(diff(u,t)) - (1.0/(c*c))*laplacian(u,{x,y,z}) = 0,
+  u(x,y,z,t=0) = u0,
+  dom,
+  At(t={1.5,2.0,3.0,20.0}), /*To save space only ask for certain t values.*/
+  Boundary(ALL_EXTERIOR) /*Solve with no-reflecting boundary conditions.*/
+);
+```
+---
+
+# Example (compiling)
+Now you use the Certifloat Physics Compiler to generate an executable and Coq certificate
+
+```bash
+cpc acoustic.pde -exe acoustic.exe -coq acoustic.v
+```
+
+You can execute `acoustic.exe` with no arguments to see how to use it
+
+```bash
+./acoustic.exe
+```
+which outputs
+```
+USAGE: ./acoustic.exe  \
+--u0 (u0_n1,u0_n2,u0_n3,u0_filename)  \
+--c (c_n1,c_n2,c_n3,c_filename) \
+--u (u_n1,u_n2,u_n3,u_n4,u_filename) \
+--tol error tolerance
+OUTPUTS: u_filename as float32 grid with specified dimensions
+```
+
+---
+class: center, middle
+# The Takeaway
+
+With the Certifloat Physics Compiler geophysicists can rapidly test _new
+ideas_ with confidence that their code gives them exactly what they
+asked for.
+
+
+---
+class: center, middle
+# The Takeaway
+
+These ideas differentiate you from your competitors, and that is what
+your human resource should be dedicated to, not endlessly debugging
+complex code. Computers can now do this for them
+
+---
+class: center
+# Interested?
+
+To discuss licensing, contact us at
+
+1. certifloat (A T) protonmail.com
+2. [keybase.io: certifloat](https://keybase.io/certifloat)
+
+
+
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+      var slideshow = remark.create();
+    </script>
+  </body>
+</html>
